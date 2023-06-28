@@ -1,9 +1,9 @@
-from sqlalchemy import func
+import arrow
+from sqlalchemy import func, update
 
 from db.database import session
 from db.models import Game, Player, Record
 from resourses.replies import answer
-import arrow
 
 
 async def get_current_game():
@@ -36,7 +36,7 @@ async def get_list_of_id_and_names() -> str:
     return all_players_reply
 
 
-async def get_current_game_stats() -> str:
+async def get_current_game_stats_for_admin() -> str:
     game: Game = await get_current_game()
     all_players = session.query(Record).filter(Record.game_id == game.id)
     table_size = all_players.count()
@@ -48,6 +48,30 @@ async def get_current_game_stats() -> str:
     total_games_by_admin = total_games_by_admin_query.count()
     total_games_by_host_query = session.query(Game).filter(Game.host == game.host)
     total_games_by_host = total_games_by_host_query.count()
-    current_game_stats = answer['current_game_stats_reply'].format(game.id, table_size, started, total_pot, game.admin,
-                                                                   total_games_by_admin, game.host, total_games_by_host)
-    return current_game_stats
+    current_game_stats_for_admin = answer['current_game_stats_admin_reply'].format(game.id, table_size, started, total_pot, game.admin,
+                                                                                   total_games_by_admin, game.host, total_games_by_host)
+    return current_game_stats_for_admin
+
+
+async def get_current_game_stats_for_player(telegram_id) -> str:
+    game: Game = await get_current_game()
+    player_id_query = session.query(Player.id).filter(Player.telegram_id == telegram_id)
+    player_id = player_id_query.scalar()
+    start = arrow.get(game.start_time, 'Asia/Tbilisi')
+    started = start.humanize()
+    buy_in_query = session.query(Record.buy_in).filter(Record.game_id == game.id, Record.player_id == player_id)
+    buy_in = buy_in_query.scalar()
+    current_game_stats_for_player = answer['current_game_stats_player_reply'].format(game.id, player_id, started, buy_in)
+    return current_game_stats_for_player
+
+
+async def add_thousand(telegram_id):
+    game: Game = await get_current_game()
+    buy_in_query = session.query(Record.buy_in).filter(Record.game_id == game.id, Record.player_telegram_id == telegram_id)
+    buy_in = buy_in_query.scalar()
+
+    add_1000 = update(Record).where(Record.game_id == int(game.id), Record.player_telegram_id == telegram_id).values(
+        buy_in=int(buy_in) + 1000)
+    session.execute(add_1000)
+    session.commit()
+    session.close()
