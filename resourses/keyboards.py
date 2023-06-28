@@ -10,6 +10,6 @@ current_game_admin_keyboard.insert(InlineKeyboardButton(text='add funds', callba
 current_game_admin_keyboard.insert(InlineKeyboardButton(text='end game', callback_data='end game'))
 current_game_admin_keyboard.insert(InlineKeyboardButton(text='settings', callback_data='settings'))
 
-add_funds_keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='add funds', callback_data='self add funds')],
-                                                           [InlineKeyboardButton(text='exit game', callback_data='exit game')]])
+add_funds_keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='add 1000', callback_data='self add 1000'),
+                                                           InlineKeyboardButton(text='exit game', callback_data='exit game')]])
 

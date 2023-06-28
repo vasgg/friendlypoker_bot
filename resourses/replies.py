@@ -15,12 +15,17 @@ answer = {
     "game_menu_current_game": "Tut srazu huyak stata po current game",
     "game_menu_new_game": "Game not started yet.\n"
                           "Please wait for admin to start session.",
-    "current_game_stats_reply": "Current game info:\n\n"
-                                "Game ID: {}, Table size: {}\n"
-                                "Started {}\n"
-                                "Total pot: {}\n"
-                                "Admin: {}({})\n"
-                                "Host: {}({})\n",
+    "current_game_stats_admin_reply": "Current game info:\n\n"
+                                      "Game ID: {}, Table size: {}\n"
+                                      "Started {}\n"
+                                      "Total pot: {}\n"
+                                      "Admin: {}({})\n"
+                                      "Host: {}({})\n",
+    "current_game_stats_player_reply": "Current session info:\n"
+                                       "You are participating Game #{} as Player #{}.\n"
+                                       "Session started {}.\n\n"
+                                       "Your current buy-in: <b>{}</>.\n",
+
     # "": "",
     # "": "",
 }
