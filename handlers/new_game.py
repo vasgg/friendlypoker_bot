@@ -54,6 +54,7 @@ async def host_choosing(message: types.Message, state: FSMContext):
 
     for player in attending_players:
         record = Record(player_id=player.id,
+                        player_telegram_id=player.telegram_id,
                         game_id=game.id,
                         buy_in=1000)
         session.add(record)

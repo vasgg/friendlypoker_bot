@@ -17,7 +17,7 @@ class Player(Base):
     __tablename__ = "players"
 
     id = mapped_column(Integer, primary_key=True)
-    telegram_id = mapped_column(BigInteger, nullable=False)
+    telegram_id = mapped_column(BigInteger, nullable=False, unique=True)
     username: Mapped[Optional[str]] = mapped_column(String(32))
     fullname: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
@@ -32,6 +32,7 @@ class Record(Base):
 
     id = mapped_column(Integer, primary_key=True)
     player_id = mapped_column(ForeignKey("players.id"))
+    player_telegram_id = mapped_column(ForeignKey("players.telegram_id"))
     game_id = mapped_column(ForeignKey("games.id"))
     buy_in: Mapped[int]
     buy_out: Mapped[Optional[int]]
