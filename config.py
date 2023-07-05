@@ -8,6 +8,7 @@ from loguru import logger
 load_dotenv()
 
 token = os.getenv("BOT_TOKEN")
+telegram_group = os.getenv("TEST_GROUP_ID")
 pguser = os.getenv('POSTGRES_USER')
 pgpassword = os.getenv('POSTGRES_PASSWORD')
 pgdb = os.getenv('POSTGRES_DB')
