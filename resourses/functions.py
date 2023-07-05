@@ -1,4 +1,8 @@
+from collections import namedtuple
+from datetime import datetime
+
 import arrow
+import humanize as humanize
 from sqlalchemy import func, update
 
 from db.database import session
@@ -53,19 +57,30 @@ async def get_current_game_stats_for_admin() -> str:
     return current_game_stats_for_admin
 
 
-async def get_current_game_stats_for_player(telegram_id) -> str:
+async def get_current_game_stats_for_player(telegram_id: int) -> str:
     game: Game = await get_current_game()
-    player_id_query = session.query(Player.id).filter(Player.telegram_id == telegram_id)
-    player_id = player_id_query.scalar()
-    start = arrow.get(game.start_time, 'Asia/Tbilisi')
+    record: Record = session.query(Record).filter(Record.game_id == game.id, Record.player_telegram_id == telegram_id).scalar()
+    player_id = record.player_id
+    start = arrow.get(game.start_time, 'Asia/Karachi')
     started = start.humanize()
-    buy_in_query = session.query(Record.buy_in).filter(Record.game_id == game.id, Record.player_id == player_id)
-    buy_in = buy_in_query.scalar()
-    current_game_stats_for_player = answer['current_game_stats_player_reply'].format(game.id, player_id, started, buy_in)
-    return current_game_stats_for_player
+
+    total_pot = session.query(func.sum(Record.buy_in)).filter(Record.game_id == game.id).scalar()
+    buy_in = record.buy_in
+    buy_out = record.buy_out
+    if not buy_out:
+        game_stats_for_player = answer['current_game_stats_player_reply'].format(game.id, player_id, started, buy_in, total_pot)
+    else:
+        net_profit = record.net_profit
+        # ROI = record.ROI
+        finish = arrow.get(record.exited_at, 'Asia/Tbilisi')
+        duration = finish - start
+        game_stats_for_player = answer['exited_game_stats_player_reply'].format(game.id, humanize.naturaldelta(duration), buy_in, buy_out,
+                                                                                net_profit)
+
+    return game_stats_for_player
 
 
-async def add_thousand(telegram_id):
+async def add_thousand(telegram_id: int):
     game: Game = await get_current_game()
     buy_in_query = session.query(Record.buy_in).filter(Record.game_id == game.id, Record.player_telegram_id == telegram_id)
     buy_in = buy_in_query.scalar()
@@ -75,3 +90,112 @@ async def add_thousand(telegram_id):
     session.execute(add_1000)
     session.commit()
     session.close()
+
+
+async def get_remaining_players_in_game() -> list:
+    game: Game = await get_current_game()
+    remaining_players = session.query(Record).filter(Record.game_id == game.id, Record.buy_out == None)
+    remaining_players_ids = []
+    if remaining_players:
+        for player in remaining_players:
+            remaining_players_ids.append(player.id)
+    return remaining_players_ids
+
+
+async def check_balance_after_game() -> namedtuple:
+    game: Game = await get_current_game()
+    total_pot = session.query(func.sum(Record.buy_in).filter(Record.game_id == game.id)).scalar()
+    total_buy_outs = session.query(func.sum(Record.buy_out).filter(Record.game_id == game.id)).scalar()
+    delta = total_pot - total_buy_outs
+    Results = namedtuple('Results', ['total_pot', 'delta'])
+    results = Results(total_pot, delta)
+    return results
+
+
+async def get_king_of_kush(game_id: int):
+    king_of_kush_id = session.query(Record.id).filter(Record.game_id == game_id).order_by(Record.net_profit.desc()).first()
+    return king_of_kush_id[0]
+
+
+async def exiting_game_by_player(telegram_id: int, buy_out: int):
+    game: Game = await get_current_game()
+    buy_in_query = session.query(Record.buy_in).filter(Record.game_id == game.id, Record.player_telegram_id == telegram_id)
+    buy_in = buy_in_query.scalar()
+    net_profit = buy_out - buy_in
+    ROI = round((net_profit / buy_in) * 100)
+    record = update(Record).where(Record.game_id == int(game.id), Record.player_telegram_id == telegram_id).values(
+        buy_out=buy_out, net_profit=net_profit, ROI=ROI, exited_at=datetime.utcnow())
+    session.execute(record)
+    session.commit()
+    session.close()
+
+
+async def commit_game_results_to_db(game_id: int, total_pot: int, king_id: int):
+    close_game = update(Game).where(Game.id == game_id).values(finish_time=datetime.utcnow(),
+                                                               total_pot=total_pot,
+                                                               king_of_kush=king_id)
+    session.execute(close_game)
+    session.commit()
+    session.close()
+
+
+async def equalizer(debtors, creditors):
+    # if len(debtors) == 0 or len(creditors) == 0:
+    #     return 1
+    # for i in debtors:
+    #     val = abs(i[1])
+    #     for j in creditors:
+    #         if val == j[1]:
+    #             text = f'{i[0]} otdaet {j[0]} {val} deneg'
+    #             print('==============================', text)
+    #             del j
+    #             del i
+    #             if len(debtors) or len(creditors) != 0:
+    #
+    #                 return await equalizer(debtors, creditors)
+    # # print(creditors, debtors)
+    b = sorted(debtors, key=lambda x: x[1])
+    a = sorted(creditors, key=lambda x: x[1], reverse=True)
+    print('creditors = ', a, '\ndebtors', b)
+
+    if len(b) == 0 or len(a) == 0:
+        return 1
+    else:
+        if abs(b[0][1]) == a[0][1]:
+            del a[0]
+            del b[0]
+
+            return await equalizer(b, a)
+        elif abs(b[0][1]) < a[0][1]:
+            text = f'{b[0][0]} otdaet {a[0][0]} {abs(b[0][1])} deneg'
+            print(text)
+
+            a[0][1] = a[0][1] - abs(b[0][1])
+            del b[0]
+
+            return await equalizer(b, a)
+        elif abs(b[0][1]) > a[0][1]:
+            text = f'{b[0][0]} otdaet {a[0][0]} {a[0][1]} deneg'
+            print(text)
+            b[0][1] = b[0][1] + a[0][1]
+            del a[0]
+            return await equalizer(b, a)
+
+
+async def debt_counter(game_id: int):
+    records = session.query(Record).filter(Record.game_id == game_id).all()
+    creditors = []
+    debtors = []
+    transactions = []
+    for record in records:
+
+        player = [record.player_id, record.net_profit]
+        if record.net_profit > 0:
+            creditors.append(player)
+        else:
+            debtors.append(player)
+
+    full_dolg = sum(item[1] for item in debtors)
+    print(creditors, '\n', debtors)
+    print('full dolg', full_dolg)
+    await equalizer(debtors, creditors)
