@@ -36,6 +36,9 @@ class Record(Base):
     game_id = mapped_column(ForeignKey("games.id"))
     buy_in: Mapped[int]
     buy_out: Mapped[Optional[int]]
+    net_profit: Mapped[Optional[int]]
+    ROI: Mapped[Optional[int]]
+    exited_at: Mapped[Optional[datetime]]
 
 
 class Game(Base):
@@ -45,7 +48,7 @@ class Game(Base):
     start_time: Mapped[datetime] = mapped_column(insert_default=func.now())
     finish_time: Mapped[Optional[datetime]]
     total_pot: Mapped[Optional[int]]
-    chip_leader = mapped_column(ForeignKey("players.id"))
+    king_of_kush = mapped_column(ForeignKey("players.id"))
     host = mapped_column(ForeignKey("players.id"))
     admin = mapped_column(ForeignKey("players.id"))
 
