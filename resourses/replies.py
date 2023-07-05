@@ -21,11 +21,20 @@ answer = {
                                       "Total pot: {}\n"
                                       "Admin: {}({})\n"
                                       "Host: {}({})\n",
-    "current_game_stats_player_reply": "Current session info:\n"
-                                       "You are participating Game #{} as Player #{}.\n"
+    "current_game_stats_player_reply": "<b>Current session info:</>\n\n"
+                                       "You are participating game #{} as player #{}.\n"
                                        "Session started {}.\n\n"
-                                       "Your current buy-in: <b>{}</>.\n",
-
-    # "": "",
-    # "": "",
+                                       "Your current buy-in: <b>{}</>.\n"
+                                       "Total pot so far: <b>{}</>.",
+    "exited_game_stats_player_reply": "<b>Leaving game #{}.</>\n"
+                                      "Game duration: {}.\n\n"
+                                      "Buy-in: <b>{}</>.\n"
+                                      "Buy-out: <b>{}</>.\n"
+                                      "Profit: <b>{}</>.",
+    "exit_game_by_player_reply": "Whats your remaining balance?",
+    "exit_game_wrong_total_sum": "Impossible to finish the game, the buy-in and cash-out amounts do not match\n\n"
+                                 "Difference: <b>{}</>",
+    "value_error_reply": "Please enter correct value",
+    "remaining_players_in_game": "Can't close session, following players still in game:\n\n"
+                                 "<b>{}</>",
 }
