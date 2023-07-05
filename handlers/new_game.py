@@ -9,32 +9,29 @@ from resourses.replies import answer
 from resourses.states import States
 
 
-# from bot.utils.keyboards import tools
-
-
 @dp.callback_query_handler(text='new game')
 async def game_starter(call: types.CallbackQuery):
-    await States.Missing_playsers.set()
+    await States.missing_playsers.set()
     text = await get_list_of_id_and_names() + '\n' + answer["players_reply"]
     await dp.bot.send_message(chat_id=call.from_user.id, text=text)
 
 
-@dp.message_handler(state=States.Missing_playsers)
+@dp.message_handler(state=States.missing_playsers)
 async def missing_players_input(message: types.Message, state: FSMContext):
     missing_players = [int(num) for num in str(message.text).strip().split()]
     if 0 in missing_players:
         await dp.bot.send_message(chat_id=message.from_user.id, text=answer["host_game"])
-        await States.Host_selection.set()
+        await States.host_selection.set()
 
     else:
         await state.update_data(missing_players=missing_players)
 
         await dp.bot.send_message(chat_id=message.from_user.id, text=answer["host_game_with_missing_players"]
                                   .format(missing_players))
-        await States.Host_selection.set()
+        await States.host_selection.set()
 
 
-@dp.message_handler(state=States.Host_selection)
+@dp.message_handler(state=States.host_selection)
 async def host_choosing(message: types.Message, state: FSMContext):
     host = message.text
     data = await state.get_data()
