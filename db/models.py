@@ -68,5 +68,5 @@ class Debt(Base):
     created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
     paid_at: Mapped[Optional[datetime]]
 
-    def __repr__(self):
-        return f"<New debt. {self.debtor_id} dued {self.amount} to {self.creditor_id}>"
+    # def __repr__(self):
+    #     return f"<New debt. {self.debtor_id} dued {self.amount} to {self.creditor_id}>"

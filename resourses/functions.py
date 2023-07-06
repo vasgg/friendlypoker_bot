@@ -6,7 +6,7 @@ import humanize as humanize
 from sqlalchemy import func, update
 
 from db.database import session
-from db.models import Game, Player, Record
+from db.models import Debt, Game, Player, Record
 from resourses.replies import answer
 
 
@@ -139,63 +139,63 @@ async def commit_game_results_to_db(game_id: int, total_pot: int, king_id: int):
     session.close()
 
 
-async def equalizer(debtors, creditors):
-    # if len(debtors) == 0 or len(creditors) == 0:
-    #     return 1
-    # for i in debtors:
-    #     val = abs(i[1])
-    #     for j in creditors:
-    #         if val == j[1]:
-    #             text = f'{i[0]} otdaet {j[0]} {val} deneg'
-    #             print('==============================', text)
-    #             del j
-    #             del i
-    #             if len(debtors) or len(creditors) != 0:
-    #
-    #                 return await equalizer(debtors, creditors)
-    # # print(creditors, debtors)
-    b = sorted(debtors, key=lambda x: x[1])
-    a = sorted(creditors, key=lambda x: x[1], reverse=True)
-    print('creditors = ', a, '\ndebtors', b)
+async def equalizer(debtors: list, creditors: list, game_id: int, transactions=[]):
+    for debtor in debtors:
+        for creditor in creditors:
+            if abs(debtor[1]) == creditor[1]:
+                debt = Debt(game_id=game_id,
+                            creditor_id=creditor[0],
+                            debtor_id=debtor[0],
+                            amount=creditor[1])
+                transactions.append(debt)
+                debtors.remove(debtor)
+                creditors.remove(creditor)
+                return await equalizer(debtors, creditors, game_id)
 
-    if len(b) == 0 or len(a) == 0:
-        return 1
+    sorted_creditors = sorted(creditors, key=lambda x: x[1], reverse=True)
+    sorted_debtors = sorted(debtors, key=lambda x: x[1])
+    print('creditors = ', sorted_creditors, '\ndebtors', sorted_debtors)
+
+    if len(sorted_debtors) == 0 or len(sorted_creditors) == 0:
+        print(len(transactions), '&', transactions)
+        return transactions
     else:
-        if abs(b[0][1]) == a[0][1]:
-            del a[0]
-            del b[0]
-
-            return await equalizer(b, a)
-        elif abs(b[0][1]) < a[0][1]:
-            text = f'{b[0][0]} otdaet {a[0][0]} {abs(b[0][1])} deneg'
-            print(text)
-
-            a[0][1] = a[0][1] - abs(b[0][1])
-            del b[0]
-
-            return await equalizer(b, a)
-        elif abs(b[0][1]) > a[0][1]:
-            text = f'{b[0][0]} otdaet {a[0][0]} {a[0][1]} deneg'
-            print(text)
-            b[0][1] = b[0][1] + a[0][1]
-            del a[0]
-            return await equalizer(b, a)
-
-
-async def debt_counter(game_id: int):
-    records = session.query(Record).filter(Record.game_id == game_id).all()
-    creditors = []
-    debtors = []
-    transactions = []
-    for record in records:
-
-        player = [record.player_id, record.net_profit]
-        if record.net_profit > 0:
-            creditors.append(player)
+        if abs(sorted_debtors[0][1]) < sorted_creditors[0][1]:
+            debt = Debt(game_id=game_id,
+                        creditor_id=sorted_creditors[0][0],
+                        debtor_id=sorted_debtors[0][0],
+                        amount=abs(sorted_debtors[0][1]))
+            transactions.append(debt)
+            sorted_creditors[0][1] = sorted_creditors[0][1] - abs(sorted_debtors[0][1])
+            del sorted_debtors[0]
+            return await equalizer(sorted_debtors, sorted_creditors, game_id)
         else:
-            debtors.append(player)
+            debt = Debt(game_id=game_id,
+                        creditor_id=sorted_creditors[0][0],
+                        debtor_id=sorted_debtors[0][0],
+                        amount=sorted_creditors[0][1])
+            transactions.append(debt)
+            sorted_debtors[0][1] = sorted_debtors[0][1] + sorted_creditors[0][1]
+            del sorted_creditors[0]
+            return await equalizer(sorted_debtors, sorted_creditors, game_id)
 
-    full_dolg = sum(item[1] for item in debtors)
-    print(creditors, '\n', debtors)
-    print('full dolg', full_dolg)
-    await equalizer(debtors, creditors)
+
+async def debt_calculator(game_id: int) -> list[Debt]:
+    records = session.query(Record).filter(Record.game_id == game_id).all()
+
+    creditors = [[record.player_id, record.net_profit] for record in records if record.net_profit > 0]
+    debtors = [[record.player_id, record.net_profit] for record in records if record.net_profit < 0]
+    transactions = await equalizer(debtors, creditors, game_id)
+    return transactions
+
+
+async def commit_debts_to_db(transactions: list[Debt]) -> None:
+    for transaction in transactions:
+        session.add(transaction)
+    session.commit()
+    session.close()
+
+
+async def debt_informer(transactions: list[Debt]) -> None:
+    for transaction in transactions:
+        ...
