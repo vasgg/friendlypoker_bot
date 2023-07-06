@@ -196,4 +196,4 @@ async def commit_debts_to_db(transactions: list[Debt]) -> None:
 
 async def debt_informer(transactions: list[Debt]) -> None:
     for transaction in transactions:
-        ...
+        pass
