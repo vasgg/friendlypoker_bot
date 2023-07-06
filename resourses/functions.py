@@ -156,10 +156,7 @@ async def equalizer(debtors: list, creditors: list, game_id: int, transactions=[
     sorted_debtors = sorted(debtors, key=lambda x: x[1])
     print('creditors = ', sorted_creditors, '\ndebtors', sorted_debtors)
 
-    if len(sorted_debtors) == 0 or len(sorted_creditors) == 0:
-        print(len(transactions), '&', transactions)
-        return transactions
-    else:
+    while sorted_debtors:
         if abs(sorted_debtors[0][1]) < sorted_creditors[0][1]:
             debt = Debt(game_id=game_id,
                         creditor_id=sorted_creditors[0][0],
@@ -178,6 +175,7 @@ async def equalizer(debtors: list, creditors: list, game_id: int, transactions=[
             sorted_debtors[0][1] = sorted_debtors[0][1] + sorted_creditors[0][1]
             del sorted_creditors[0]
             return await equalizer(sorted_debtors, sorted_creditors, game_id)
+    return transactions
 
 
 async def debt_calculator(game_id: int) -> list[Debt]:
