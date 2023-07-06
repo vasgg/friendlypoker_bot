@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import BigInteger, Integer
+from sqlalchemy import BigInteger, Integer, Boolean
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy import func
@@ -21,7 +21,7 @@ class Player(Base):
     username: Mapped[Optional[str]] = mapped_column(String(32))
     fullname: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
-    is_admin: Mapped[bool]
+    is_admin: Mapped[bool] = mapped_column(insert_default=False)
 
     # games: Mapped[Optional[List["Game"]]] = relationship('Game', back_populates='players')
     # records: Mapped[Optional[List["Record"]]] = relationship(back_populates='records')
@@ -60,7 +60,13 @@ class Debt(Base):
     __tablename__ = "debts"
 
     id = mapped_column(Integer, primary_key=True)
-    game = mapped_column(ForeignKey("games.id"))
-    creditor = mapped_column(ForeignKey("players.id"))
-    debtor = mapped_column(ForeignKey("players.id"))
-    amount = Mapped[int]
+    game_id = mapped_column(ForeignKey("games.id"), nullable=False)
+    creditor_id = mapped_column(ForeignKey("players.id"))
+    debtor_id = mapped_column(ForeignKey("players.id"))
+    amount = mapped_column(Integer)
+    paid = mapped_column(Boolean, insert_default=False)
+    created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
+    paid_at: Mapped[Optional[datetime]]
+
+    def __repr__(self):
+        return f"<New debt. {self.debtor_id} dued {self.amount} to {self.creditor_id}>"

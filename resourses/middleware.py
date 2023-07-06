@@ -14,8 +14,7 @@ class AuthMiddleware(BaseMiddleware):
         if not user_exist:
             player = Player(telegram_id=message.from_user.id,
                             username=message.from_user.username,
-                            fullname=message.from_user.full_name,
-                            is_admin=False)
+                            fullname=message.from_user.full_name)
             session.add(player)
             session.commit()
             session.close()
