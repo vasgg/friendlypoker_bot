@@ -35,6 +35,16 @@ answer = {
     "exit_game_wrong_total_sum": "Impossible to finish the game, the buy-in and cash-out amounts do not match\n\n"
                                  "Difference: <b>{}</>",
     "value_error_reply": "Please enter correct value",
+    "debtor_personal_game_report": "Game {}. Automated debt report: \n\n"
+                                   "You owe {} GEL to {}.",
+    "creditor_personal_game_report": "Game {}. Automated debt report: \n\n"
+                                     "{} owes you {} GEL.",
+    "global_game_report": "Game {} report.\n\n"
+                          "Total players: {}\n"
+                          "Game duration: {}\n"
+                          "Total pot: {}\n"
+                          "MVP: {}\n"
+                          "Host: {}\n",
     "remaining_players_in_game": "Can't close session, following players still in game:\n\n"
                                  "<b>{}</>",
 }

@@ -5,6 +5,7 @@ import arrow
 import humanize as humanize
 from sqlalchemy import func, update
 
+from config import dp
 from db.database import session
 from db.models import Debt, Game, Player, Record
 from resourses.replies import answer
@@ -38,6 +39,16 @@ async def get_list_of_id_and_names() -> str:
         player_str = f'{player.id}. {player.fullname}\n'
         all_players_reply += player_str
     return all_players_reply
+
+
+async def get_telegram_id_from_player_id(player_id: int) -> int:
+    telegram_id = session.query(Player.telegram_id).filter(Player.id == player_id).scalar()
+    return telegram_id
+
+
+async def get_username_from_player_id(player_id: int) -> str:
+    username = session.query(Player.username).filter(Player.id == player_id).scalar()
+    return "@" + username
 
 
 async def get_current_game_stats_for_admin() -> str:
@@ -139,7 +150,9 @@ async def commit_game_results_to_db(game_id: int, total_pot: int, king_id: int):
     session.close()
 
 
-async def equalizer(debtors: list, creditors: list, game_id: int, transactions=[]):
+async def equalizer(debtors: list, creditors: list, game_id: int, transactions=[]) -> list[Debt]:
+    print('creditors = ', creditors, '\ndebtors = ', debtors)
+
     for debtor in debtors:
         for creditor in creditors:
             if abs(debtor[1]) == creditor[1]:
@@ -154,7 +167,6 @@ async def equalizer(debtors: list, creditors: list, game_id: int, transactions=[
 
     sorted_creditors = sorted(creditors, key=lambda x: x[1], reverse=True)
     sorted_debtors = sorted(debtors, key=lambda x: x[1])
-    print('creditors = ', sorted_creditors, '\ndebtors', sorted_debtors)
 
     while sorted_debtors:
         if abs(sorted_debtors[0][1]) < sorted_creditors[0][1]:
@@ -196,4 +208,13 @@ async def commit_debts_to_db(transactions: list[Debt]) -> None:
 
 async def debt_informer(transactions: list[Debt]) -> None:
     for transaction in transactions:
-        pass
+        debtor_telegram_id = await get_telegram_id_from_player_id(transaction.debtor_id)
+        creditor_telegram_id = await get_telegram_id_from_player_id(transaction.creditor_id)
+        debtor_username = await get_username_from_player_id(transaction.debtor_id)
+        creditor_username = await get_username_from_player_id(transaction.debtor_id)
+        await dp.bot.send_message(chat_id=debtor_telegram_id,
+                                  text=answer['debtor_personal_game_report'].format(transaction.game_id, transaction.amount,
+                                                                                    creditor_username))
+        await dp.bot.send_message(chat_id=creditor_telegram_id,
+                                  text=answer['creditor_personal_game_report'].format(transaction.game_id, debtor_username,
+                                                                                      transaction.amount))
