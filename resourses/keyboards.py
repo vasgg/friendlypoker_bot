@@ -14,3 +14,12 @@ add_funds_keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
                                                             InlineKeyboardButton(text='exit game', callback_data='exit game')]])
 
 add_keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='add 1000', callback_data='self add 1000')]])
+
+
+async def get_paid_button(debt_id):
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=f'DEBT {debt_id} PAID', callback_data=f'debt_{debt_id}')]])
+
+
+async def get_paid_button_confirmation(debt_id):
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=f'YEAH', callback_data=f'{debt_id}_debt')],
+                                                 [InlineKeyboardButton(text=f'NOPE', callback_data=f'{debt_id}_debt')]])
