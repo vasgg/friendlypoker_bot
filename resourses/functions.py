@@ -8,6 +8,7 @@ from sqlalchemy import func, update
 from config import dp
 from db.database import session
 from db.models import Debt, Game, Player, Record
+from resourses.keyboards import get_paid_button
 from resourses.replies import answer
 
 
@@ -45,7 +46,6 @@ async def get_list_of_id_and_names() -> str:
 
 
 async def get_list_of_players_and_buy_ins(game_id: int) -> str:
-    # game = await get_current_game()
     all_records = session.query(Record).filter(Record.game_id == game_id)
     result = ''
     summ = 0
@@ -95,9 +95,7 @@ async def get_current_game_stats_for_admin() -> str:
 
 
 async def get_current_game_stats_for_player(telegram_id: int, game_id: int) -> str:
-    # game: Game = await get_current_game()
     record: Record = session.query(Record).filter(Record.game_id == game_id, Record.player_telegram_id == telegram_id).scalar()
-    player_id = record.player_id
     start = arrow.get(record.connected_at)
     started = start.humanize()
 
@@ -250,15 +248,17 @@ async def commit_debts_to_db(transactions: list[Debt]) -> None:
     session.close()
 
 
-async def debt_informer(transactions: list[Debt]) -> None:
-    for transaction in transactions:
-        debtor_telegram_id = await get_telegram_id_from_player_id(transaction.debtor_id)
-        creditor_telegram_id = await get_telegram_id_from_player_id(transaction.creditor_id)
-        debtor_username = await get_username_from_player_id(transaction.debtor_id)
-        creditor_username = await get_username_from_player_id(transaction.creditor_id)
+async def debt_informer_by_id(game_id: int) -> None:
+    debts = session.query(Debt).filter(Debt.game_id == game_id).all()
+    for debt in debts:
+        debtor_telegram_id = await get_telegram_id_from_player_id(debt.debtor_id)
+        creditor_telegram_id = await get_telegram_id_from_player_id(debt.creditor_id)
+        debtor_username = await get_username_from_player_id(debt.debtor_id)
+        creditor_username = await get_username_from_player_id(debt.creditor_id)
         await dp.bot.send_message(chat_id=debtor_telegram_id,
-                                  text=answer['debtor_personal_game_report'].format(transaction.game_id, transaction.amount / 100,
-                                                                                    creditor_username))
+                                  text=answer['debtor_personal_game_report'].format(
+                                      debt.game_id, debt.id, debt.amount / 100, creditor_username),
+                                  reply_markup=await get_paid_button(debt.id))
         await dp.bot.send_message(chat_id=creditor_telegram_id,
-                                  text=answer['creditor_personal_game_report'].format(transaction.game_id, debtor_username,
-                                                                                      transaction.amount / 100))
+                                  text=answer['creditor_personal_game_report'].format(
+                                      debt.game_id, debt.id, debtor_username, debt.amount / 100))
