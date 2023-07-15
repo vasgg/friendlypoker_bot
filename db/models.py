@@ -1,10 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import BigInteger, Integer, Boolean
+from sqlalchemy import BigInteger, Boolean, Integer
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
-from sqlalchemy import func
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.orm import mapped_column
 
@@ -20,11 +19,14 @@ class Player(Base):
     telegram_id = mapped_column(BigInteger, nullable=False, unique=True)
     username: Mapped[Optional[str]] = mapped_column(String(32))
     fullname: Mapped[str]
-    created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(insert_default=datetime.utcnow())
     is_admin: Mapped[bool] = mapped_column(insert_default=False)
 
     # games: Mapped[Optional[List["Game"]]] = relationship('Game', back_populates='players')
     # records: Mapped[Optional[List["Record"]]] = relationship(back_populates='records')
+
+    def __lt__(self, other):
+        return self.id < other.id
 
 
 class Record(Base):
@@ -38,17 +40,22 @@ class Record(Base):
     buy_out: Mapped[Optional[int]]
     net_profit: Mapped[Optional[int]]
     ROI: Mapped[Optional[int]]
+    connected_at: Mapped[datetime] = mapped_column(insert_default=datetime.utcnow())
     exited_at: Mapped[Optional[datetime]]
+
+    def __lt__(self, other):
+        return self.buy_in < other.buy_in
 
 
 class Game(Base):
     __tablename__ = "games"
 
     id = mapped_column(Integer, primary_key=True)
-    start_time: Mapped[datetime] = mapped_column(insert_default=func.now())
+    start_time: Mapped[datetime] = mapped_column(insert_default=datetime.utcnow())
     finish_time: Mapped[Optional[datetime]]
     total_pot: Mapped[Optional[int]]
-    king_of_kush = mapped_column(ForeignKey("players.id"))
+    table_size: Mapped[Optional[int]]
+    MVP = mapped_column(ForeignKey("players.id"))
     host = mapped_column(ForeignKey("players.id"))
     admin = mapped_column(ForeignKey("players.id"))
 
@@ -65,7 +72,7 @@ class Debt(Base):
     debtor_id = mapped_column(ForeignKey("players.id"))
     amount = mapped_column(Integer)
     paid = mapped_column(Boolean, insert_default=False)
-    created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(insert_default=datetime.utcnow())
     paid_at: Mapped[Optional[datetime]]
 
     # def __repr__(self):
