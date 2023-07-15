@@ -1,4 +1,5 @@
 import os
+import redis
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -12,6 +13,7 @@ telegram_group = os.getenv("TEST_GROUP_ID")
 pguser = os.getenv('POSTGRES_USER')
 pgpassword = os.getenv('POSTGRES_PASSWORD')
 pgdb = os.getenv('POSTGRES_DB')
+redis = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 bot = Bot(token=token, parse_mode=types.ParseMode.HTML)
 storage = MemoryStorage()
