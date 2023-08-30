@@ -8,8 +8,9 @@ from loguru import logger
 
 load_dotenv()
 
-token = os.getenv("BOT_TOKEN")
-telegram_group = os.getenv("TEST_GROUP_ID")
+token = os.getenv('BOT_TOKEN')
+telegram_group = os.getenv('TEST_GROUP_ID')
+admin = os.getenv('ADMIN_ID')
 pguser = os.getenv('POSTGRES_USER')
 pgpassword = os.getenv('POSTGRES_PASSWORD')
 pgdb = os.getenv('POSTGRES_DB')
@@ -19,5 +20,11 @@ bot = Bot(token=token, parse_mode=types.ParseMode.HTML)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-logger.add('resourses/debug.log', format='{time} {level} {message}', level='DEBUG', retention='30 days', enqueue=True)
-db_string = f"postgresql+psycopg2://{pguser}:{pgpassword}@localhost:5432/{pgdb}"
+logger.add(
+    'resourses/debug.log',
+    format='{time} {level} {message}',
+    level='DEBUG',
+    retention='30 days',
+    enqueue=True,
+)
+db_string = f'postgresql+psycopg2://{pguser}:{pgpassword}@localhost:5432/{pgdb}'
