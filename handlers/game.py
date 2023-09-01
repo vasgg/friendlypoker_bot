@@ -6,12 +6,9 @@ from aiogram.dispatcher.filters import Command
 from sqlalchemy import update
 
 from config import dp, redis, telegram_group, logger
-from db.CRUD.debt import (
-    commit_debts_to_db,
-    debt_calculator,
-    debt_informer_by_id)
-from db.CRUD.game import (check_game_balance, commit_game_results_to_db, exiting_game_by_player, get_current_game,
-                          get_current_game_stats_for_player, get_group_game_report, get_remaining_players_in_game)
+from db.CRUD.debt import commit_debts_to_db, debt_calculator, debt_informer_by_id
+from db.CRUD.game import check_game_balance, commit_game_results_to_db, exiting_game_by_player, get_current_game, \
+    get_current_game_stats_for_player, get_group_game_report, get_remaining_players_in_game
 from db.CRUD.player import (add_thousand, get_list_of_id_and_names, get_list_of_players_and_buy_ins, get_mvp, get_player_from_id,
                             get_players)
 from db.database import session

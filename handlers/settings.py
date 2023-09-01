@@ -2,17 +2,9 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from config import dp, logger
-from db.CRUD.admin import (
-    demote_from_admin,
-    promote_to_admin,
-)
-from db.CRUD.player import (
-    get_list_of_id_and_names,
-    get_player_from_id,
-)
-from resourses.keyboards import (
-    add_admin_keyboard,
-)
+from db.CRUD.admin import demote_from_admin, promote_to_admin
+from db.CRUD.player import get_list_of_id_and_names, get_player_from_id
+from resourses.keyboards import add_admin_keyboard
 from resourses.replies import answer
 from resourses.states import States
 
@@ -49,14 +41,12 @@ async def add_admin_input(message: types.Message, state: FSMContext):
             chat_id=player.telegram_id,
             text=answer['promote_complete_reply_to_player'].format(
                 '@' + message.from_user.username
-            ),
+            )
         )
         await state.reset_state()
     except ValueError as e:
         await message.answer(answer['value_error_reply'])
-        logger.debug(
-            answer['value_error_log'], message.from_user.full_name, e, message.text
-        )
+        logger.debug(answer['value_error_log'], message.from_user.full_name, e, message.text)
 
 
 @dp.callback_query_handler(text='delete_admin')
@@ -82,7 +72,7 @@ async def delete_admin_input(message: types.Message, state: FSMContext):
                 chat_id=player.telegram_id,
                 text=answer['demote_complete_reply_to_player'].format(
                     '@' + message.from_user.username
-                ),
+                )
             )
         else:
             await dp.bot.send_message(chat_id=message.from_user.id, text=answer['demote_error_reply'])
@@ -90,6 +80,4 @@ async def delete_admin_input(message: types.Message, state: FSMContext):
         await state.reset_state()
     except ValueError as e:
         await message.answer(answer['value_error_reply'])
-        logger.debug(
-            answer['value_error_log'], message.from_user.full_name, e, message.text
-        )
+        logger.debug(answer['value_error_log'], message.from_user.full_name, e, message.text)

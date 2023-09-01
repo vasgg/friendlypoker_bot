@@ -69,3 +69,8 @@ async def add_thousand(telegram_id: int, game_id: int):
     session.execute(add_1000)
     session.commit()
     session.close()
+
+
+async def add_players(added_players: list) -> None:
+    pass
+
